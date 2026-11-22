@@ -24,3 +24,7 @@ frontend/.env.local
 Thumbs.db
 .vscode/
 .idea/
+
+# Local agent notes (kept out of the repo)
+AGENTS.md
+CLAUDE.md
