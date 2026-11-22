@@ -12,6 +12,20 @@ Innovation/
 └── dev.ps1     Starts both servers in separate PowerShell windows.
 ```
 
+## Screenshots
+
+The feed on first load: stats bar, search, source and type filters, tag cloud and ranked cards.
+
+![Embodied Hub home feed](docs/screenshot-home.png)
+
+Filters live in the URL, so a view like *GitHub repos tagged humanoid, most starred* is shareable:
+
+![Filtered to humanoid GitHub repos](docs/screenshot-filtered.png)
+
+Full-text search across titles, abstracts, authors and tags, here limited to papers:
+
+![Searching papers for diffusion policy](docs/screenshot-papers.png)
+
 ## Prerequisites
 
 - Python 3.12 with [uv](https://docs.astral.sh/uv/) (or plain pip)
