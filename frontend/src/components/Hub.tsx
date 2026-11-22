@@ -1,17 +1,23 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
-import type { ItemPage, Stats, TagCount } from "@/lib/types";
+import { usePref } from "@/lib/prefs";
+import type { Item, ItemPage, Stats, TagCount } from "@/lib/types";
 import { useFilters } from "@/lib/useFilters";
-import { FilterBar } from "./FilterBar";
+import { EmptyState } from "./EmptyState";
+import { Hero } from "./Hero";
 import { ItemCard } from "./ItemCard";
+import { ItemDrawer } from "./ItemDrawer";
 import { Pagination } from "./Pagination";
-import { StatsBar } from "./StatsBar";
-import { TagCloud } from "./TagCloud";
+import { ResultsToolbar, type ViewMode } from "./ResultsToolbar";
+import { Sidebar } from "./Sidebar";
+import { CardSkeleton } from "./Skeleton";
+import { TopBar } from "./TopBar";
 
 const PAGE_SIZE = 24;
 const POLL_MS = 5000;
+const VIEW_MODES = ["grid", "list"] as const;
 
 function message(e: unknown): string {
   return e instanceof Error ? e.message : String(e);
@@ -22,9 +28,13 @@ export function Hub() {
   const [result, setResult] = useState<{ key: string; page: ItemPage } | null>(null);
   const [tags, setTags] = useState<TagCount[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
+  const [newThisWeek, setNewThisWeek] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [reloadNonce, setReloadNonce] = useState(0);
+  const [selected, setSelected] = useState<Item | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [view, setView] = usePref<ViewMode>("hub-view", "grid", VIEW_MODES);
   const wasRunning = useRef(false);
 
   const { q, days, sort, page: pageNumber } = filters;
@@ -62,12 +72,27 @@ export function Hub() {
         if (!cancelled) setTags(data);
       })
       .catch(() => {
-        /* tags are decorative; the items error is already surfaced */
+        /* decorative; the items error is already surfaced */
       });
     return () => {
       cancelled = true;
     };
   }, [days, sourceCsv, reloadNonce]);
+
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .items({ days: 7, page: 1, page_size: 1 })
+      .then((data) => {
+        if (!cancelled) setNewThisWeek(data.total);
+      })
+      .catch(() => {
+        /* the tile shows a dash */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [reloadNonce]);
 
   // Poll stats; when an ingest run finishes, reload items and tags.
   useEffect(() => {
@@ -97,7 +122,7 @@ export function Hub() {
     };
   }, []);
 
-  const onRefresh = async () => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
       await api.triggerIngest();
@@ -107,54 +132,103 @@ export function Hub() {
       setRefreshing(false);
       setError(message(e));
     }
-  };
+  }, []);
+
+  const onSearch = useCallback((value: string) => update({ q: value }), [update]);
+  const onToggleTag = useCallback((tag: string) => toggle("tag", tag), [toggle]);
+  const closeDrawer = useCallback(() => setSelected(null), []);
+
+  const running = refreshing || stats?.is_running === true;
+  const items = page?.items ?? [];
+  const maxScore = items.reduce((m, i) => Math.max(m, i.score), 0);
+  const showSkeleton = loading && !page;
+  const gridClass = view === "grid" ? "grid gap-4 sm:grid-cols-2 2xl:grid-cols-3" : "flex flex-col gap-3";
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col gap-5 px-4 py-6 sm:px-6">
-      <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold tracking-tight">Embodied Hub</h1>
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          Newly launched repos, models, datasets and papers across robotics, computer vision and embodied AI.
-        </p>
-      </header>
+    <>
+      <TopBar q={filters.q} onSearch={onSearch} onRefresh={onRefresh} running={running} />
 
-      <StatsBar stats={stats} onRefresh={onRefresh} refreshing={refreshing} error={error} />
-      <FilterBar filters={filters} update={update} toggle={toggle} reset={reset} isDefault={isDefault} />
-      <TagCloud tags={tags} active={filters.tag} onToggle={(t) => toggle("tag", t)} />
+      <div className="bg-aurora">
+        <div className="mx-auto w-full max-w-[1400px] px-4 sm:px-6">
+          <Hero stats={stats} newThisWeek={newThisWeek} running={running} />
 
-      {error && (
-        <div className="rounded-md border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950 dark:text-rose-200">
-          Could not reach the API: {error}. Is the backend running on port 8000?
+          <div className="grid gap-8 py-8 lg:grid-cols-[256px_minmax(0,1fr)]">
+            <Sidebar
+              filters={filters}
+              update={update}
+              toggle={toggle}
+              reset={reset}
+              isDefault={isDefault}
+              stats={stats}
+              tags={tags}
+              open={filtersOpen}
+              onClose={() => setFiltersOpen(false)}
+            />
+
+            <section className="flex min-w-0 flex-col gap-4" aria-live="polite">
+              <ResultsToolbar
+                filters={filters}
+                update={update}
+                toggle={toggle}
+                total={page ? page.total : null}
+                loading={loading}
+                view={view}
+                onView={setView}
+                onOpenFilters={() => setFiltersOpen(true)}
+              />
+
+              {error && (
+                <div className="rounded-xl border border-arxiv/40 bg-arxiv/10 px-4 py-3 text-sm text-fg">
+                  <strong className="font-semibold">Could not reach the API.</strong> {error}. Is the backend running on
+                  port 8000?
+                </div>
+              )}
+
+              {showSkeleton && (
+                <div className={gridClass}>
+                  {Array.from({ length: 9 }, (_, i) => (
+                    <CardSkeleton key={i} view={view} />
+                  ))}
+                </div>
+              )}
+
+              {page && items.length === 0 && !loading && (
+                <EmptyState nothingIndexed={stats?.total === 0} running={running} onReset={reset} onRefresh={onRefresh} />
+              )}
+
+              {items.length > 0 && (
+                <div className={`${gridClass} transition-opacity ${loading ? "opacity-60" : ""}`}>
+                  {items.map((item, index) => (
+                    <ItemCard
+                      key={`${item.source}-${item.id}`}
+                      item={item}
+                      view={view}
+                      index={index}
+                      activeTags={filters.tag}
+                      onToggleTag={onToggleTag}
+                      onOpen={setSelected}
+                      maxScore={maxScore}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {page && (
+                <Pagination page={page.page} pageSize={page.page_size} total={page.total} onPage={(p) => update({ page: p })} />
+              )}
+            </section>
+          </div>
+
+          <footer className="flex flex-col items-center justify-between gap-2 border-t border-border py-6 text-xs text-muted sm:flex-row">
+            <span>Embodied Hub · aggregates public listings from GitHub, Hugging Face and arXiv.</span>
+            <span>
+              Press <kbd>/</kbd> to search · <kbd>Esc</kbd> to close
+            </span>
+          </footer>
         </div>
-      )}
-
-      <div className="flex items-center justify-between text-sm text-zinc-600 dark:text-zinc-400">
-        <span>{page ? `${page.total.toLocaleString()} results` : loading ? "Loading…" : ""}</span>
-        {loading && page && <span>Updating…</span>}
       </div>
 
-      {page && page.items.length === 0 && !loading && (
-        <div className="rounded-xl border border-dashed border-zinc-300 p-10 text-center text-sm text-zinc-500 dark:border-zinc-700">
-          {stats && stats.total === 0
-            ? "Nothing collected yet. The first refresh runs automatically at startup and takes a few minutes; you can also press Refresh sources."
-            : "No items match these filters."}
-        </div>
-      )}
-
-      <div className={`grid gap-4 sm:grid-cols-2 lg:grid-cols-3 ${loading ? "opacity-70" : ""}`}>
-        {page?.items.map((item) => (
-          <ItemCard
-            key={`${item.source}-${item.id}`}
-            item={item}
-            activeTags={filters.tag}
-            onToggleTag={(t) => toggle("tag", t)}
-          />
-        ))}
-      </div>
-
-      {page && (
-        <Pagination page={page.page} pageSize={page.page_size} total={page.total} onPage={(p) => update({ page: p })} />
-      )}
-    </div>
+      <ItemDrawer item={selected} activeTags={filters.tag} onToggleTag={onToggleTag} onClose={closeDrawer} />
+    </>
   );
 }

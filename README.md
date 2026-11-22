@@ -14,17 +14,24 @@ Innovation/
 
 ## Screenshots
 
-The feed on first load: stats bar, search, source and type filters, tag cloud and ranked cards.
+Dark theme, default view: hero with live stats, facet sidebar (time window, sort, source, type, topics with
+counts) and the ranked feed. Press `/` to jump to search.
 
-![Embodied Hub home feed](docs/screenshot-home.png)
+![Embodied Hub home feed, dark theme](docs/screenshot-home.png)
 
-Filters live in the URL, so a view like *GitHub repos tagged humanoid, most starred* is shareable:
+Light theme with filters applied. Filters live in the URL, so *GitHub repos tagged humanoid, most starred*
+is a shareable link; active filters show as removable pills above the results.
 
-![Filtered to humanoid GitHub repos](docs/screenshot-filtered.png)
+![Filtered view, light theme](docs/screenshot-light.png)
 
-Full-text search across titles, abstracts, authors and tags, here limited to papers:
+Clicking a card opens a detail panel with the full abstract or description, traction, topics and a direct
+link to the source.
 
-![Searching papers for diffusion policy](docs/screenshot-papers.png)
+![Item detail panel](docs/screenshot-detail.png)
+
+On a phone the sidebar collapses into a Filters sheet and the feed goes single-column.
+
+<img src="docs/screenshot-mobile.png" alt="Mobile layout" width="390">
 
 ## Prerequisites
 

@@ -1,26 +1,211 @@
 @import "tailwindcss";
 
+/* Theme is driven by data-theme on <html>, set before hydration in layout.tsx. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 :root {
-  --background: #fafafa;
-  --foreground: #171717;
+  color-scheme: light;
+  --bg: #f5f5f8;
+  --bg-elevated: rgba(255, 255, 255, 0.78);
+  --surface: #ffffff;
+  --surface-2: #f1f1f5;
+  --surface-3: #e7e7ee;
+  --border: #e3e3ea;
+  --border-strong: #cdcdd8;
+  --fg: #121216;
+  --fg-2: #46465a;
+  --muted: #7b7b90;
+  --accent: #6a5cf6;
+  --accent-2: #0ea5c9;
+  --accent-soft: rgba(106, 92, 246, 0.12);
+  --github: #1f2328;
+  --hf: #c98a00;
+  --arxiv: #dc2652;
+  --glow-a: rgba(106, 92, 246, 0.16);
+  --glow-b: rgba(14, 165, 201, 0.14);
+  --shadow-card: 0 1px 2px rgba(18, 18, 22, 0.04), 0 10px 28px -16px rgba(18, 18, 22, 0.16);
+  --shadow-float: 0 30px 70px -24px rgba(18, 18, 22, 0.35);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #08080b;
+  --bg-elevated: rgba(10, 10, 14, 0.72);
+  --surface: #111116;
+  --surface-2: #17171d;
+  --surface-3: #1f1f27;
+  --border: #22222b;
+  --border-strong: #32323d;
+  --fg: #f3f3f7;
+  --fg-2: #b6b6c4;
+  --muted: #7c7c8e;
+  --accent: #8f82ff;
+  --accent-2: #22d3ee;
+  --accent-soft: rgba(143, 130, 255, 0.16);
+  --github: #e6e6ec;
+  --hf: #fbbf24;
+  --arxiv: #fb6183;
+  --glow-a: rgba(143, 130, 255, 0.2);
+  --glow-b: rgba(34, 211, 238, 0.12);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.5), 0 12px 32px -18px rgba(0, 0, 0, 0.8);
+  --shadow-float: 0 30px 80px -24px rgba(0, 0, 0, 0.85);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-bg: var(--bg);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-fg: var(--fg);
+  --color-fg-2: var(--fg-2);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-2: var(--accent-2);
+  --color-accent-soft: var(--accent-soft);
+  --color-github: var(--github);
+  --color-hf: var(--hf);
+  --color-arxiv: var(--arxiv);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --shadow-card: var(--shadow-card);
+  --shadow-float: var(--shadow-float);
+  --animate-shimmer: shimmer 1.6s linear infinite;
+  --animate-rise: rise 0.35s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-slide-in: slide-in 0.28s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-slide-in-left: slide-in-left 0.28s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-fade-in: fade-in 0.2s ease-out both;
+  --animate-pulse-dot: pulse-dot 1.4s ease-in-out infinite;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@keyframes shimmer {
+  from {
+    background-position: -600px 0;
+  }
+  to {
+    background-position: 600px 0;
+  }
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes pulse-dot {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent-2) 60%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 6px transparent;
   }
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--bg);
+  color: var(--fg);
   font-family: var(--font-geist-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Soft colour wash behind the hero. */
+.bg-aurora {
+  background-image:
+    radial-gradient(900px 420px at 12% -8%, var(--glow-a), transparent 62%),
+    radial-gradient(760px 380px at 88% -4%, var(--glow-b), transparent 62%);
+}
+
+/* Brand gradient used for the mark, headline and progress bars. */
+.text-gradient {
+  background: linear-gradient(100deg, var(--accent) 0%, var(--accent-2) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.bg-gradient-brand {
+  background: linear-gradient(100deg, var(--accent) 0%, var(--accent-2) 100%);
+}
+
+/* Skeleton shimmer. */
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-2) 0%, var(--surface-3) 40%, var(--surface-2) 80%);
+  background-size: 600px 100%;
+  animation: var(--animate-shimmer);
+  border-radius: 0.5rem;
+}
+
+/* Thin scrollbars inside the facet lists and drawer. */
+.scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+.scroll-thin::-webkit-scrollbar {
+  width: 8px;
+}
+.scroll-thin::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+/* Keyboard hint. */
+kbd {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 11px;
+  line-height: 1;
+  padding: 3px 5px;
+  border-radius: 5px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-2);
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

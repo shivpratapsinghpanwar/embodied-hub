@@ -8,17 +8,24 @@ interface ChipProps {
   children: ReactNode;
   title?: string;
   size?: "sm" | "md";
+  className?: string;
 }
 
-export function Chip({ active = false, onClick, children, title, size = "md" }: ChipProps) {
+export function Chip({ active = false, onClick, children, title, size = "md", className = "" }: ChipProps) {
   const base =
-    "inline-flex items-center gap-1 rounded-full border font-medium transition select-none whitespace-nowrap";
+    "inline-flex items-center gap-1 rounded-full border font-medium whitespace-nowrap select-none transition-[background-color,border-color,color,box-shadow] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60";
   const sizing = size === "sm" ? "px-2 py-0.5 text-[11px]" : "px-3 py-1 text-xs";
   const tone = active
-    ? "border-indigo-600 bg-indigo-600 text-white hover:bg-indigo-500 dark:border-indigo-400 dark:bg-indigo-400 dark:text-zinc-950"
-    : "border-zinc-300 bg-white text-zinc-700 hover:border-zinc-400 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-zinc-500";
+    ? "border-transparent bg-accent text-white shadow-[0_0_0_3px_var(--accent-soft)]"
+    : "border-border bg-surface text-fg-2 hover:border-border-strong hover:text-fg";
   return (
-    <button type="button" onClick={onClick} title={title} aria-pressed={active} className={`${base} ${sizing} ${tone}`}>
+    <button
+      type="button"
+      onClick={onClick}
+      title={title}
+      aria-pressed={active}
+      className={`${base} ${sizing} ${tone} ${className}`}
+    >
       {children}
     </button>
   );
